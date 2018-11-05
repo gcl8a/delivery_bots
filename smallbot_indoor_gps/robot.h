@@ -15,7 +15,6 @@
 
 #include <matrix.h>
 
-/////////TO BE EDITED BY THE STUDENT///////////
 #define VAR_VEL_ENC 1e-2
 #define VAR_POS_GPS 1e-4
 
@@ -27,7 +26,7 @@
  * Gear ratio of 9.7:1 -> 465.6 ticks / wheel rotation 
  * = 465.6 ticks / rot / (0.285 m / rot)
  */
- 
+
 #define TICKS_PER_METER 1520
 #define RADIUS_ROBOT 0.114
 
@@ -52,7 +51,7 @@ protected:
   double K_dist = 0.4;
   double K_ang  = 1.0;
 
-  uint8_t readyToReport = 0;
+  volatile uint8_t readyToReport = 0; //does this need to be volatile?
 
 public:
   UGV(void) : wheel_speeds(2), effort(2), P(3,3)
@@ -62,9 +61,10 @@ public:
   {
     DEBUG_SERIAL.println("UGV::Init");
 
-    //opMode = IDLE;
     driver.Init(COMM_PWM);
     motionController.Init();
+
+    Idle();
 
     DEBUG_SERIAL.println("/UGV::Init");
   }
@@ -112,9 +112,6 @@ public:
 
   virtual void ProcessPID(void)
   {
-//    DEBUG_SERIAL.print("readyToPID");
-//    DEBUG_SERIAL.print('\n');
-
       wheel_speeds = motionController.CalcEstimate(); //wheel velocity is ticks/period
 
       DEBUG_SERIAL.print(wheel_speeds[0]);
@@ -154,19 +151,9 @@ public:
     float speedRight = vel + ang_vel * RADIUS_ROBOT;
 
     SetWheelSpeeds(speedLeft, speedRight);
-//    //and convert to ticks per frame
-//    speedLeft  *= (float)TICKS_PER_METER / (float)LOOP_RATE;
-//    speedRight *= (float)TICKS_PER_METER / (float)LOOP_RATE;
-//
-//    //integer vector
-//    ivector speed(2); 
-//    speed[0] = speedLeft;
-//    speed[1] = speedRight;
-//        
-//    motionController.SetTarget(speed);
   }
 
-  void SetWheelSpeeds(float speedLeft, float speedRight)
+  void SetWheelSpeeds(float speedLeft, float speedRight) //in m/s
   {
     //and convert to ticks per frame
     speedLeft  *= (float)TICKS_PER_METER / (float)LOOP_RATE;
@@ -180,31 +167,12 @@ public:
     motionController.SetTarget(speed);
   }
 
-//  dvector EstimateVehicleSpeed(void)
-//  {
-//    dvector x(2);
-//    x[0] = (( wheel_speeds[0] + wheel_speeds[1]) * LOOP_RATE) / (float)(2 * TICKS_PER_METER);
-//    x[1] = ((-wheel_speeds[0] + wheel_speeds[1]) * LOOP_RATE) / (RADIUS_ROBOT * (float)(2 * TICKS_PER_METER));
-//
-//    return x;
-//  }
-//
-//  dvector EstimateWheelSpeeds(void)
-//  {
-//    dvector x(2);
-//    x[0] = (wheel_speeds[0] * LOOP_RATE) / (float)(TICKS_PER_METER);
-//    x[1] = (wheel_speeds[1] * LOOP_RATE) / (float)(TICKS_PER_METER);
-//
-//    return x;
-//  }
-
   ivector CommandMotors(const ivector& effort) //actuators, generically
   {
     driver.SetPowers(effort[0], effort[1]);
     
     return effort;
   }
-
 
   Pose UpdatePrediction(int16_t deltaL, int16_t deltaR) //deltas in encoder ticks!!!
   /*
@@ -243,14 +211,14 @@ public:
     while(currPose.theta < -M_PI)
       currPose.theta += 2 * M_PI;
 
-        String message;
-        message += String(dt);
-        message += '\t';
-        message += String(distL);
-        message += '\t';
-        message += String(distR);
-        message += '\t';
-DEBUG_SERIAL.print(message);
+//        String message;
+//        message += String(dt);
+//        message += '\t';
+//        message += String(distL);
+//        message += '\t';
+//        message += String(distR);
+//        message += '\t';
+//        DEBUG_SERIAL.print(message);
  
     //Extended Kalman filter    
     //Update P: P- = A * P- * A.MakeTranspose() + W * Q * Wt;
@@ -322,7 +290,7 @@ DEBUG_SERIAL.print(message);
   {
     DEBUG_SERIAL.println("kalman");
     //K = P H' * (H P H' + V R V')^-1
-    //dmatrix denominator = Hgps * P * Hgps.MakeTranspose() + Vgps * R * Vgps.MakeTranspose();
+
     dmatrix denominator(2,2); // this will be pre-constructed as the inverse
     denominator[0][0] = P[1][1] + VAR_POS_GPS;
     denominator[0][1] = -P[0][1];

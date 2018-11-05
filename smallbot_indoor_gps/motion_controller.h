@@ -101,21 +101,6 @@ public:
     DEBUG_SERIAL.println("/MotionController::Init");
   }
 
-//  ivector MakeObservation(void)
-//  {
-////    DEBUG_SERIAL.println("MakeObservation");
-//
-//    ivector encReadings(2);
-//    //...
-//    if(encoders[0]) encReadings[0] = encoders[0]->CalcDelta();
-//    if(encoders[1]) encReadings[1] = encoders[1]->CalcDelta();
-//    
-//    ivector observation = H * encReadings;
-//    
-////    DEBUG_SERIAL.println("/MakeObservation");
-//    return observation;    
-//  }
-
   ivector CalcEstimate(void)
   {
     ivector estimate(2);
