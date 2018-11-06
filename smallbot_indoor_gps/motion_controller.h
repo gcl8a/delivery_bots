@@ -29,25 +29,14 @@ protected:
   ivector target;   //target speed, using integer math to speed up the processing
   ivector estimate; //wheel speed estimate
 
-//  ivector targetTwist;  //target speed and and ang. vel.
-//  ivector estTwist;     //speed estimate
-
-  /*
-   * Ideally, sensor inputs would be "generic", but here I'll just hard code the encoders to see how I like this format
-   */
-//  imatrix H; //observation matrix
-
   TIArray<Encoder> encoders;
 
   uint16_t Kp = KP_DEF;
   uint16_t Ki = KI_DEF;
 
 public:
-  MotionController(void) : target(2), estimate(2), /*H(2,2),*/ encoders(2) //hard code encoders for the moment...
-  {
-//    H[0][0] = 1;
-//    H[1][1] = 1;
-  }
+  MotionController(void) : target(2), estimate(2), encoders(2) //hard code encoders for the moment...
+  {}
 
   void Init(void)
   {

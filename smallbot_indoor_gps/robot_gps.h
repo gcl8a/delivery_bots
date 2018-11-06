@@ -1,6 +1,6 @@
 #include "robot.h"
 
-class PixyUGV : public UGV
+class UGV_RFM : public UGV
 {
 public:
   virtual void Init(void)

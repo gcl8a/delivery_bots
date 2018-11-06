@@ -2,9 +2,9 @@
  * Main program for free-range bot using my "indoor GPS" system
  */
 
-#include "robot_pixy.h"
+#include "robot_gps.h"
 
-PixyUGV robot;
+UGV_RFM robot;
 
 void setup()
 {
