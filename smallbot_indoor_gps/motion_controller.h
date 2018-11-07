@@ -19,9 +19,9 @@
 
 volatile uint8_t readyToPID = 0;
 
-#define INTEGRAL_CAP 24000 //note that the comparison is sum > (INTEGRAL_CAP / Ki) so that changing Ki doesn't affect the cap
-#define KP_DEF 150
-#define KI_DEF 50
+#define INTEGRAL_CAP 12000 //note that the comparison is sum > (INTEGRAL_CAP / Ki) so that changing Ki doesn't affect the cap
+#define KP_DEF 256
+#define KI_DEF 1
 
 class MotionController
 { 
@@ -109,6 +109,13 @@ public:
     static ivector sumError(2);
 
     ivector error = CalcError();
+
+    DEBUG_SERIAL.print(error[0]);
+    DEBUG_SERIAL.print('\t');
+    DEBUG_SERIAL.print(error[1]);
+    DEBUG_SERIAL.print('\t');
+    DEBUG_SERIAL.print('\t');
+    
     sumError += error;
     
     if(abs(sumError[0]) > (INTEGRAL_CAP / Ki)) sumError[0] -= error[0]; //cap the sum of the errors 

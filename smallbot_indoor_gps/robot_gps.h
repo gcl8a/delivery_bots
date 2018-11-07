@@ -1,7 +1,10 @@
 #include "robot.h"
+#include "apriltag.h"
 
 class UGV_RFM : public UGV
 {
+  protected:
+    uint16_t myID = MYNODEID;
 public:
   virtual void Init(void)
   {
@@ -36,27 +39,29 @@ public:
         Idle();
       }
 
-      else //observation
+      else if(recString.length() == 6) //observation
       {
-        int comma = recString.indexOf(',');
-        float x = recString.substring(comma + 1).toFloat();
-        
-        comma = recString.indexOf(',', comma + 1);
-        float y = recString.substring(comma + 1).toFloat();
-  
+        AprilTag tag;
+        memcpy(&tag, &recString[0], 6);
+          
   //      DEBUG_SERIAL.print(x);
   //      DEBUG_SERIAL.print('\t');
   //      DEBUG_SERIAL.print(y);
   //      DEBUG_SERIAL.print('\n');
-  
-        ApplyObservation(x, y);
+        if(tag.id == myID) ApplyObservation(tag.x, tag.y);
       }
+
+      else {} //punt
     }
 
     if(readyToReport)
     {
         String message;
         message += String(millis());
+        message += '\t';
+        message += String(destPose.x);
+        message += '\t';
+        message += String(destPose.y);
         message += '\t';
         message += String(currPose.x);
         message += '\t';
@@ -65,8 +70,7 @@ public:
         message += String(currPose.theta);
         message += '\n';
   
-        //SendMessage(0, message);
-        DEBUG_SERIAL.print(message);
+        SendMessage(10, message);
         readyToReport = 0;
     }
   }

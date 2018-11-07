@@ -48,8 +48,8 @@ protected:
   
   dmatrix P;
 
-  double K_dist = 0.4;
-  double K_ang  = 1.0;
+  double K_dist = 0.2;
+  double K_ang  = 2.0;
 
   volatile uint8_t readyToReport = 0; //does this need to be volatile?
 
@@ -140,6 +140,13 @@ public:
         SetTwistSpeed(error[0] * K_dist, error[1] * K_ang);
   
         effort = motionController.CalcEffort();
+        
+        DEBUG_SERIAL.print("e: ");
+        DEBUG_SERIAL.print(effort[0]);
+        DEBUG_SERIAL.print('\t');
+        DEBUG_SERIAL.print(effort[1]);
+        DEBUG_SERIAL.print('\t');
+        
         CommandMotors(effort);
       }
   }
@@ -149,6 +156,10 @@ public:
     //do calculations in m/s
     float speedLeft  = vel - ang_vel * RADIUS_ROBOT;
     float speedRight = vel + ang_vel * RADIUS_ROBOT;
+    DEBUG_SERIAL.print(speedLeft);
+    DEBUG_SERIAL.print('\t');
+    DEBUG_SERIAL.print(speedRight);
+    DEBUG_SERIAL.print('\t');
 
     SetWheelSpeeds(speedLeft, speedRight);
   }
@@ -163,6 +174,11 @@ public:
     ivector speed(2); 
     speed[0] = speedLeft;
     speed[1] = speedRight;
+
+    DEBUG_SERIAL.print(speed[0]);
+    DEBUG_SERIAL.print('\t');
+    DEBUG_SERIAL.print(speed[1]);
+    DEBUG_SERIAL.print('\t');
         
     motionController.SetTarget(speed);
   }

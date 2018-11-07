@@ -9,8 +9,7 @@ UGV_RFM robot;
 void setup()
 {
   DEBUG_SERIAL.begin(115200);
-  //while(!DEBUG_SERIAL) {delay(500);} //uncommenting this REQUIRES the Serial Monitor to be opened
-  delay(2000); //give the Serial Monitor a couple seconds to get up and running, if you want
+  while(!DEBUG_SERIAL) {delay(500);} //uncommenting this REQUIRES the Serial Monitor to be opened
   DEBUG_SERIAL.println("setup");
 
   robot.Init();
