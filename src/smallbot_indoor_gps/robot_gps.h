@@ -22,10 +22,12 @@ public:
   {
     UGV::MainLoop();
 
+    static uint32_t lastTime = 0;
+    
     if(CheckRadio())
     {
-      DEBUG_SERIAL.println(recString);
-
+      lastTime = millis();
+      
       if(recString[0] == 'D') //destination command
       {
         float x = recString.substring(1).toFloat();
@@ -45,11 +47,22 @@ public:
         memcpy(&tag, &recString[0], 6);
 
         DEBUG_SERIAL.print("received: ");
+        DEBUG_SERIAL.print(tag.id);
+        DEBUG_SERIAL.print('\t');
         DEBUG_SERIAL.print(tag.x);
         DEBUG_SERIAL.print('\t');
         DEBUG_SERIAL.print(tag.y);
         DEBUG_SERIAL.print('\n');
-        if(tag.id == myID) ApplyObservation(tag.y / 200., tag.x / 200.);
+
+        DEBUG_SERIAL.print("corr.: ");
+        DEBUG_SERIAL.print(millis());
+        DEBUG_SERIAL.print(", ");
+
+        if(tag.id == myID) ApplyObservation(tag.x, tag.y);
+
+        DEBUG_SERIAL.print(millis());
+        DEBUG_SERIAL.print('\n');
+        
         readyToReport = 1;
       }
 
@@ -70,6 +83,10 @@ public:
         message += String(currPose.y);
         message += '\t';
         message += String(currPose.theta);
+        message += '\t';
+        message += String(biasL);
+        message += '\t';
+        message += String(biasR);
         message += '\n';
   
         SendMessage(10, message);
