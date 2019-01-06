@@ -47,45 +47,65 @@ public:
     encoders[1] = encoder2;
 
     /*
-     * Set up TC3 for periodically calling the PID routine 
+     * Set up TC2 for periodically calling the PID routine.
+     * Note that TC3 (which was used on the SAMD21 version) is used for PWM on pin 4, so we'll switch
      */
-    // Feed GCLK0 (already enabled) to TCC2 and TC3
-    REG_GCLK_CLKCTRL = GCLK_CLKCTRL_CLKEN |         // Enable 
-                       GCLK_CLKCTRL_GEN_GCLK0 |     // Select GCLK0
-                       GCLK_CLKCTRL_ID_TCC2_TC3;    // Feed clock to TCC2 and TC3
-    while (GCLK->STATUS.bit.SYNCBUSY) {};           // Wait for synchronization
-  
+    //GCLK0 is already enabled, but if we wanted to use a different generic clock, these are the steps
+    //GCLK->GENCTRL[0].bit.GENEN = 1;
+    //GCLK->GENCTRL[0].bit.SRC = 1;
+    //while (GCLK->SYNCBUSY.bit.GENCTRL0) {};           // Wait for synchronization
+
+    //I don't understand this one. The examples and datasheet say
+    //something about routing the master (synchronized) clock to the bus,
+    //but we route a generic clock to the TC2 later, so why two clocks?
+    //It works without it, though, so now I really don't know, but I'll leave
+    //it here for refrence if it ever is needed.
+    //MCLK->APBBMASK.bit.TC2_ = 1;
+
+    //Route a generic clock (0) to TC2
+    GCLK->PCHCTRL[TC2_GCLK_ID].bit.GEN = 0;
+    GCLK->PCHCTRL[TC2_GCLK_ID].bit.CHEN = 1;
+
+    //the data sheet says you have to read back the enable bit
+    //it all works without it, but it can't hurt?
+    while(!GCLK->PCHCTRL[TC2_GCLK_ID].bit.CHEN) {}
+
     // The type cast must fit with the selected timer mode (defaults to 16-bit)
-    TcCount16* TC = (TcCount16*) TC3; // get timer struct
-    
+    TcCount16* TC = (TcCount16*) TC2; // get timer struct
+
+    //reset the TC
+    TC->CTRLA.bit.SWRST = 1;
+    while(TC->SYNCBUSY.bit.SWRST);  // wait for sync
+
     TC->CTRLA.reg &= ~TC_CTRLA_ENABLE;    // Disable TC
-    while (TC->STATUS.bit.SYNCBUSY == 1); // wait for sync 
+    while (TC->SYNCBUSY.bit.ENABLE == 1); // wait for sync 
   
-    TC->CTRLA.reg |= TC_CTRLA_MODE_COUNT16;  // Set Timer counter Mode to 16 bits (defaults to 16-bit, but why not?)
-    while (TC->STATUS.bit.SYNCBUSY == 1); // wait for sync -- UNNEEDED, according to datasheet
-  
-    TC->CTRLA.reg |= TC_CTRLA_WAVEGEN_MFRQ; // Set TC mode
-    while (TC->STATUS.bit.SYNCBUSY == 1); // wait for sync -- UNNEEDED, according to datasheet
+    TC->CTRLA.reg |= TC_CTRLA_MODE_COUNT16;  // Set Timer counter Mode to 16 bits (defaults to 16-bit, so not needed)
+    //while (TC->STATUS.bit.SYNCBUSY == 1); // wait for sync -- UNNEEDED, according to datasheet
+
+    TC->WAVE.bit.WAVEGEN = TC_WAVE_WAVEGEN_MFRQ;
+    //TC->CTRLA.reg |= TC_CTRLA_WAVEGEN_MFRQ; // Set TC mode
+    //while (TC->STATUS.bit.SYNCBUSY == 1); // wait for sync -- UNNEEDED, according to datasheet
     
     TC->CTRLA.reg |= TC_CTRLA_PRESCALER_DIV256;   // Set prescaler
-    while (TC->STATUS.bit.SYNCBUSY == 1); // wait for sync -- UNNEEDED, according to datasheet
+    while (TC->SYNCBUSY.bit.ENABLE == 1); // wait for sync
   
     //by setting TOP, we'll change the frequency to:
-    //freq = 48e6 / [(TOP + 1) * prescaler]
-    //freq * prescaler / 48e6 - 1 => TOP
-    TC->CC[0].reg = 48000000ul / (LOOP_RATE * 256) - 1; //3749;  //set compare value: freq = 48e6 / [3750 * 256] = ~50Hz ==> period of 20 ms
-    while (TC->STATUS.bit.SYNCBUSY == 1); // wait for sync
+    //freq = 120e6 / [(TOP + 1) * prescaler]
+    //freq * prescaler / 120e6 - 1 => TOP
+    TC->CC[0].reg = 120000000ul / (LOOP_RATE * 256) - 1; //9374 for 120MHz system clock
+    while (TC->SYNCBUSY.bit.CC0 == 1); // wait for sync
     
     // Interrupts
-    TC->INTENCLR.reg = 0x3B;           // clear all interrupts on this TC
+    TC->INTENCLR.reg = 0x33;           // clear all interrupts on this TC
     TC->INTENSET.bit.OVF = 1;          // enable overflow interrupt
    
     // Enable InterruptVector
-    NVIC_EnableIRQ(TC3_IRQn);  //not sure what the n is for
+    NVIC_EnableIRQ(TC2_IRQn);  //not sure what the n is for
     
     // Enable TC
     TC->CTRLA.reg |= TC_CTRLA_ENABLE;   //enable
-    while (TC->STATUS.bit.SYNCBUSY == 1); // wait for sync
+    while (TC->SYNCBUSY.bit.ENABLE == 1); // wait for sync
     
     DEBUG_SERIAL.println("/MotionController::Init");
   }
@@ -139,18 +159,18 @@ public:
   }
 };
 
-void TC3_Handler()  // Interrupt on overflow
+void TC2_Handler()  // Interrupt on overflow
 {
-  TcCount16* TC = (TcCount16*) TC3; // get timer struct
+  TcCount16* TC = (TcCount16*) TC2; // get timer struct
   
   if (TC->INTFLAG.bit.OVF == 1)   // An overflow caused the interrupt
   {
-    TC->INTFLAG.bit.OVF = 1;    // writing a one clears the flag
+    readyToPID = TC2->COUNT16.INTFLAG.reg;
+
+    TC->INTFLAG.bit.OVF = 0x01;    // writing a one clears the flag
 
     if(encoder1) encoder1->TakeSnapshot();
     if(encoder2) encoder2->TakeSnapshot();
-
-    readyToPID = 1;
   }
 }
 

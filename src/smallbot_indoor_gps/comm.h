@@ -7,7 +7,7 @@
 
 #include <RFM69.h>
 
-#define DEBUG_SERIAL SerialUSB
+#define DEBUG_SERIAL Serial
 
 String debugString;
 boolean CheckDebugSerial(void) //returns true upon newline, not just a character

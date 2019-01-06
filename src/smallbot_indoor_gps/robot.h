@@ -98,9 +98,12 @@ public:
     
     if(readyToPID) 
     {
+      DEBUG_SERIAL.print("PID: ");
+      DEBUG_SERIAL.print(millis());
       ProcessPID();
+      DEBUG_SERIAL.print(" ");
+      DEBUG_SERIAL.println(millis());
       readyToPID = 0;
-      readyToReport = 1;
     }
   }
 

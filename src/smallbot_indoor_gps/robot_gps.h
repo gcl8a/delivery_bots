@@ -22,12 +22,8 @@ public:
   {
     UGV::MainLoop();
 
-    static uint32_t lastTime = 0;
-    
     if(CheckRadio())
-    {
-      lastTime = millis();
-      
+    { 
       if(recString[0] == 'D') //destination command
       {
         float x = recString.substring(1).toFloat();

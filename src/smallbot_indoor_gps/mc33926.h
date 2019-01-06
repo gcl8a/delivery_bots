@@ -69,7 +69,7 @@ protected:
       
       powerA = abs(powerA);
       analogWrite(PWM1, powerA);
-
+      
       if(powerB > 0) 
       {
         digitalWrite(M2A, HIGH);
