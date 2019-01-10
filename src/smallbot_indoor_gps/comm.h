@@ -27,7 +27,7 @@ boolean CheckDebugSerial(void) //returns true upon newline, not just a character
 
 /////////////RFM69HCW radio
 #define NETWORKID     155   // Must be the same for all nodes (0 to 255)
-#define MYNODEID      0   // My node ID (0 to 255)
+#define MYNODEID      3   // My node ID (0 to 255)
 #define FREQUENCY     RF69_915MHZ
 
 // Create a library object for our RFM69HCW module:

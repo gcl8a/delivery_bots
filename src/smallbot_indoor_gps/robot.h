@@ -29,8 +29,8 @@
  * = 465.6 ticks / rot / (0.285 m / rot)
  */
 
-#define TICKS_PER_METER 1520
-#define RADIUS_ROBOT 0.114
+#define TICKS_PER_METER 364
+#define RADIUS_ROBOT 0.047
 
 enum UGV_STATE {DRIVE_IDLE, DRIVE_DEAD_RECK, DRIVE_GPS};
 
@@ -54,8 +54,8 @@ protected:
   TMatrix<float> P;
   TMatrix<float> Q;
 
-  double K_dist = 1.0;
-  double K_ang  = 1.0;
+  double K_dist = 0.5;
+  double K_ang  = 2.0;
 
   volatile uint8_t readyToReport = 0; //does this need to be volatile?
 
@@ -124,6 +124,9 @@ public:
 
   virtual void ProcessPID(void)
   {
+      DEBUG_SERIAL.print(millis());
+      DEBUG_SERIAL.print(": ");
+      
       wheel_speeds = motionController.CalcEstimate(); //wheel velocity is ticks/period
 
       DEBUG_SERIAL.print("[w: ");
@@ -168,7 +171,7 @@ public:
   void SetTwistSpeed(float vel, float ang_vel)
   {
     if(fabs(vel) > 0.5) vel *= 0.5 / fabs(vel);
-    if(fabs(ang_vel) > 2.0) ang_vel *= 2.0 / fabs(ang_vel);
+    if(fabs(ang_vel) > 4.0) ang_vel *= 4.0 / fabs(ang_vel);
 
     //do calculations in m/s
     float speedLeft  = vel - ang_vel * RADIUS_ROBOT;

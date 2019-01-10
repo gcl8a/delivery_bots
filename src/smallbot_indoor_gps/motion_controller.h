@@ -15,7 +15,7 @@
 
 #include "encoder.h"
 
-#define LOOP_RATE 50   //Hz
+#define LOOP_RATE 10   //Hz
 
 volatile uint8_t readyToPID = 0;
 
