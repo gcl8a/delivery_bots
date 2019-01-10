@@ -62,7 +62,7 @@ void SendMessage(int dest, String message)
   char buffer[60];
   sprintf(buffer, "%s", message.c_str());
 
-  //radio.send(dest, buffer, message.length());
+  radio.send(dest, buffer, message.length());
 
   DEBUG_SERIAL.print(buffer);
   radio.receiveDone(); //put us back into receive mode

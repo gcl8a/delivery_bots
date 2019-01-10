@@ -54,8 +54,8 @@ protected:
   TMatrix<float> P;
   TMatrix<float> Q;
 
-  double K_dist = 0.2;
-  double K_ang  = 2.0;
+  double K_dist = 1.0;
+  double K_ang  = 1.0;
 
   volatile uint8_t readyToReport = 0; //does this need to be volatile?
 
@@ -126,10 +126,11 @@ public:
   {
       wheel_speeds = motionController.CalcEstimate(); //wheel velocity is ticks/period
 
-//      DEBUG_SERIAL.print(wheel_speeds[0]);
-//      DEBUG_SERIAL.print('\t');
-//      DEBUG_SERIAL.print(wheel_speeds[1]);
-//      DEBUG_SERIAL.print('\t');
+      DEBUG_SERIAL.print("[w: ");
+      DEBUG_SERIAL.print(wheel_speeds[0]);
+      DEBUG_SERIAL.print(' ');
+      DEBUG_SERIAL.print(wheel_speeds[1]);
+      DEBUG_SERIAL.print("]\t");
 
       //get the latest prediction (stored in currPose):
       UpdatePredictionWithBias(wheel_speeds[0], wheel_speeds[1]);
@@ -144,28 +145,40 @@ public:
         while(angleError < -M_PI) {angleError += 2 * M_PI;}
         error[1] = angleError;
         
+        DEBUG_SERIAL.print("[e: ");
         DEBUG_SERIAL.print(error[0]);
-        DEBUG_SERIAL.print('\t');
+        DEBUG_SERIAL.print(' ');
         DEBUG_SERIAL.print(error[1]);
-        DEBUG_SERIAL.print('\t');
+        DEBUG_SERIAL.print("]\t");
 
         SetTwistSpeed(error[0] * K_dist, error[1] * K_ang);
   
         effort = motionController.CalcEffort();
         
+        DEBUG_SERIAL.print("[f: ");
+        DEBUG_SERIAL.print(effort[0]);
+        DEBUG_SERIAL.print(' ');
+        DEBUG_SERIAL.print(effort[1]);
+        DEBUG_SERIAL.print("]\t");
+
         CommandMotors(effort);
       }
   }
   
   void SetTwistSpeed(float vel, float ang_vel)
   {
+    if(fabs(vel) > 0.5) vel *= 0.5 / fabs(vel);
+    if(fabs(ang_vel) > 2.0) ang_vel *= 2.0 / fabs(ang_vel);
+
     //do calculations in m/s
     float speedLeft  = vel - ang_vel * RADIUS_ROBOT;
     float speedRight = vel + ang_vel * RADIUS_ROBOT;
+
+    DEBUG_SERIAL.print("[t: ");
     DEBUG_SERIAL.print(speedLeft);
-    DEBUG_SERIAL.print('\t');
+    DEBUG_SERIAL.print(' ');
     DEBUG_SERIAL.print(speedRight);
-    DEBUG_SERIAL.print('\t');
+    DEBUG_SERIAL.print("]\t");
 
     SetWheelSpeeds(speedLeft, speedRight);
   }
@@ -181,10 +194,11 @@ public:
     speed[0] = speedLeft;
     speed[1] = speedRight;
 
+    DEBUG_SERIAL.print("[t: ");
     DEBUG_SERIAL.print(speed[0]);
-    DEBUG_SERIAL.print('\t');
+    DEBUG_SERIAL.print(' ');
     DEBUG_SERIAL.print(speed[1]);
-    DEBUG_SERIAL.print('\t');
+    DEBUG_SERIAL.print("]\t");
         
     motionController.SetTarget(speed);
   }

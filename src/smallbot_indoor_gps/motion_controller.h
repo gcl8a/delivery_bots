@@ -19,9 +19,9 @@
 
 volatile uint8_t readyToPID = 0;
 
-#define INTEGRAL_CAP 12000 //note that the comparison is sum > (INTEGRAL_CAP / Ki) so that changing Ki doesn't affect the cap
+#define INTEGRAL_CAP 24000 //note that the comparison is sum > (INTEGRAL_CAP / Ki) so that changing Ki doesn't affect the cap
 #define KP_DEF 256
-#define KI_DEF 1
+#define KI_DEF 16
 
 class MotionController
 { 
@@ -92,7 +92,7 @@ public:
 
   ivector CalcEstimate(void)
   {
-    ivector estimate(2);
+    //ivector estimate(2);
     if(encoders[0]) estimate[0] = encoders[0]->CalcDelta();
     if(encoders[1]) estimate[1] = encoders[1]->CalcDelta();
 
@@ -110,18 +110,18 @@ public:
 
     ivector error = CalcError();
 
+    DEBUG_SERIAL.print("[r: ");
     DEBUG_SERIAL.print(error[0]);
     DEBUG_SERIAL.print('\t');
     DEBUG_SERIAL.print(error[1]);
-    DEBUG_SERIAL.print('\t');
-    DEBUG_SERIAL.print('\t');
+    DEBUG_SERIAL.print("]\t");
     
     sumError += error;
     
     if(abs(sumError[0]) > (INTEGRAL_CAP / Ki)) sumError[0] -= error[0]; //cap the sum of the errors 
     if(abs(sumError[1]) > (INTEGRAL_CAP / Ki)) sumError[1] -= error[1]; //cap the sum of the errors 
 
-    ivector effort = (error * Kp + sumError * Ki) / 128; //Kp and Ki in 128's to make integer math work out
+    ivector effort = (error * Kp + sumError * Ki) / 64; //Kp and Ki in 64's to make integer math work out
 
     return effort;
   }
@@ -129,11 +129,6 @@ public:
   ivector SetTarget(const ivector& t)
   {
     target = t;
-
-//    DEBUG_SERIAL.print(target[0]);
-//    DEBUG_SERIAL.print('\t');
-//    DEBUG_SERIAL.print(target[1]);
-//    DEBUG_SERIAL.print('\n');
 
     return target;
   }
